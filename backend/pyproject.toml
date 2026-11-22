@@ -1,0 +1,37 @@
+[project]
+name = "callzo-metering"
+version = "0.1.0"
+description = "Usage metering service: webhook ingest, additive usage aggregates, soft monthly cap"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi==0.165.0",
+  "uvicorn==0.54.0",
+  "pydantic==2.14.4",
+  "pydantic-settings==2.16.3",
+  "psycopg[binary,pool]==3.3.9",
+  "structlog==26.1.0",
+  "prometheus-client==0.26.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.2.0",
+  "httpx==0.28.1",
+  "ruff==0.17.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["integration: needs a real Postgres (TEST_DATABASE_URL)"]
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E501"]  # a load-test script, not application code

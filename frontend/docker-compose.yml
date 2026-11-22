@@ -1,17 +1,38 @@
 name: callzo-frontend
 
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
 services:
+  # Provided by Callzo. Only the health check, restart policy and log limits are ours.
   mock-api:
     image: meetrj/callzo-mock-usage-api
     container_name: mock-api
+    restart: unless-stopped
     ports:
       - "8001:8001"
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8001/health', timeout=2)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
 
   frontend:
-    image: callzo-task2-frontend:1.0.0
+    image: avnisinghal01/callzo-task2-frontend:1.0.0
+    restart: unless-stopped
     ports:
-      - "3000:8080"
-    depends_on:
-      - mock-api
+      - "3000:3000"
     environment:
       - API_URL=http://mock-api:8001
+    depends_on:
+      mock-api: { condition: service_healthy }
+    read_only: true            # nginx writes only to these two in-memory folders
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:uid=101,gid=101,mode=0755
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging

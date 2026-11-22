@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useReducedMotion } from "../hooks/ui.ts";
 import type { Bucket, Grain } from "../lib/buckets.ts";
@@ -29,6 +29,12 @@ export default function PillBars({ buckets, metric, grain, onActive, onPick }: {
     return s.activeTooltipIndex != null && Number.isInteger(i) && buckets[i] ? i : null;
   };
 
+  // Recharts moves its tooltip with the arrow keys; Enter then does what a click would.
+  const pointed = useRef<Bucket | null>(null);
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Enter" && zoomable && pointed.current) onPick(pointed.current);
+  };
+
   const shape = (p: ShapeProps) => {
     const { x = 0, y = 0, width = 0, height = 0, index = 0, payload } = p;
     if (height <= 0) return <g />;
@@ -41,31 +47,34 @@ export default function PillBars({ buckets, metric, grain, onActive, onPick }: {
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={buckets} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap={buckets.length > 20 ? "22%" : "26%"}
-        onMouseMove={(s) => focus(indexOf(s))} onMouseLeave={() => focus(null)}
-        onClick={(s) => { const i = indexOf(s); if (i !== null && zoomable) onPick(buckets[i]); }}
-        style={{ cursor: zoomable ? "zoom-in" : "default" }}>
-        <YAxis width={40} tickCount={4} tickFormatter={m.short} tickLine={false} axisLine={false}
-          tick={{ fontSize: 12, fill: "var(--color-muted)" }} />
-        <XAxis dataKey="from" ticks={ticks} interval={ticks ? "preserveEnd" : "preserveStartEnd"}
-          tickFormatter={(v: string) => (quarters && v.slice(5, 7) === "01" ? v.slice(0, 4) : buckets.find((b) => b.from === v)?.label ?? "")} tickLine={false} axisLine={false}
-          tickMargin={10} minTickGap={18} tick={{ fontSize: 12, fill: "var(--color-muted)" }} />
-        <Tooltip cursor={false} isAnimationActive={!reduced} animationDuration={140}
-          content={({ active: on, payload }) => {
-            const b = payload?.[0]?.payload as Bucket | undefined;
-            if (!on || !b) return null;
-            return (
-              <div className="rounded-2xl bg-ink px-3.5 py-2.5 text-white shadow-float">
-                <p className="tnum text-lg font-bold leading-tight">{m.format(b[metric])}</p>
-                <p className="text-xs text-white/75">{b.title}{b.partial ? ` · ${b.days} ${b.days === 1 ? "day" : "days"} only` : ""}</p>
-                {zoomable && <p className="mt-1 text-xs font-semibold text-white/90">Click to zoom in</p>}
-              </div>
-            );
-          }} />
-        <Bar dataKey={metric} shape={shape} maxBarSize={44} background={{ fill: "var(--color-track)", radius }}
-          isAnimationActive={!reduced} animationDuration={420} animationEasing="ease-out" />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="h-full" onKeyDown={onKeyDown}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={buckets} aria-label={`${m.label} chart. Arrow keys move between bars${zoomable ? ", Enter zooms in" : ""}.`} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} barCategoryGap={buckets.length > 20 ? "22%" : "26%"}
+          onMouseMove={(s) => focus(indexOf(s))} onMouseLeave={() => focus(null)}
+          onClick={(s) => { const i = indexOf(s); if (i !== null && zoomable) onPick(buckets[i]); }}
+          style={{ cursor: zoomable ? "zoom-in" : "default" }}>
+          <YAxis width={40} tickCount={4} tickFormatter={m.short} tickLine={false} axisLine={false}
+            tick={{ fontSize: 12, fill: "var(--color-muted)" }} />
+          <XAxis dataKey="from" ticks={ticks} interval={ticks ? "preserveEnd" : "preserveStartEnd"}
+            tickFormatter={(v: string) => (quarters && v.slice(5, 7) === "01" ? v.slice(0, 4) : buckets.find((b) => b.from === v)?.label ?? "")} tickLine={false} axisLine={false}
+            tickMargin={10} minTickGap={18} tick={{ fontSize: 12, fill: "var(--color-muted)" }} />
+          <Tooltip cursor={false} isAnimationActive={!reduced} animationDuration={140}
+            content={({ active: on, payload }) => {
+              const b = payload?.[0]?.payload as Bucket | undefined;
+              pointed.current = on && b ? b : null;
+              if (!on || !b) return null;
+              return (
+                <div className="rounded-2xl bg-ink px-3.5 py-2.5 text-white shadow-float">
+                  <p className="tnum text-lg font-bold leading-tight">{m.format(b[metric])}</p>
+                  <p className="text-xs text-white/75">{b.title}{b.partial ? ` · ${b.days} ${b.days === 1 ? "day" : "days"} only` : ""}</p>
+                  {zoomable && <p className="mt-1 text-xs font-semibold text-white/90">Click or press Enter to zoom in</p>}
+                </div>
+              );
+            }} />
+          <Bar dataKey={metric} shape={shape} maxBarSize={44} background={{ fill: "var(--color-track)", radius }}
+            isAnimationActive={!reduced} animationDuration={420} animationEasing="ease-out" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

@@ -1,0 +1,7 @@
+# Everything with one command: `docker compose up`.
+# Each task also runs on its own from its folder, as the brief asks.
+name: callzo
+
+include:
+  - backend/docker-compose.yml
+  - frontend/docker-compose.yml

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { api, ApiError } from "../api/client.ts";
 import { countryName, flag, formatCount, PLAN_LABEL } from "../lib/format.ts";
 import { Avatar } from "../ui/Avatar.tsx";
@@ -39,10 +39,15 @@ export function SettingsPage({ id, step, onStep, onExit }: { id: number; step: S
 
   useEffect(() => { heading.current?.focus(); }, [step, S.load, done]);
 
-  const focusError = () => requestAnimationFrame(() => {
+  // Runs after React has rendered the errors, so there is always something to focus.
+  const [errorTick, setErrorTick] = useState(0);
+  const focusError = () => setErrorTick((t) => t + 1);
+  useLayoutEffect(() => {
+    if (!errorTick) return;
     const bad = form.current?.querySelector<HTMLElement>("[aria-invalid='true']");
     (bad?.matches("input") ? bad : bad?.querySelector<HTMLElement>("input"))?.focus();
-  });
+  }, [errorTick]);
+
   const goTo = (n: StepNo) => { S.flush(step); setSubmitted({ kind: "idle" }); onStep(n); };
 
   const next = async () => {

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Metering console · Callzo</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="#/simulator" aria-label="Callzo metering, home"><span class="logo" id="logo"></span><span>Callzo</span><span class="chip">Metering</span></a>
+    <nav id="nav" class="seg" aria-label="Sections"></nav>
+    <a id="health" class="health" href="#/live"><span class="dot"></span><span>Connecting</span></a>
+  </header>
+  <main id="main" tabindex="-1"></main>
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+  <dialog id="drawer" class="drawer" aria-labelledby="drawer-title"></dialog>
+</body>
+</html>
