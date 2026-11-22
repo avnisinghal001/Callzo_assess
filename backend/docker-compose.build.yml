@@ -1,0 +1,11 @@
+# Build from this folder instead of pulling the published image:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+x-build: &build
+  build: { context: ., target: runtime }
+  image: callzo-task1-backend:dev
+  pull_policy: build
+
+services:
+  api: *build
+  worker: *build
+  migrate: *build

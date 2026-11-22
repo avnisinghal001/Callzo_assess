@@ -16,7 +16,9 @@ From this folder, with Docker running:
 docker compose up
 ```
 
-That starts Postgres, the migrations, two API servers, two workers and nginx. Callzo's simulator then sends every scenario once and exits. Open the console at [localhost:8000](http://localhost:8000). No `.env` is needed; [`.env.example`](.env.example) lists what can be changed.
+The app image is published as [`avnisinghal01/callzo-task1-backend:1.0.1`](https://hub.docker.com/r/avnisinghal01/callzo-task1-backend), for x86 and ARM. To build it from this folder instead, see below.
+
+Compose starts Postgres, the migrations, two API servers, two workers and nginx. Callzo's simulator then sends every scenario once and exits. Open the console at [localhost:8000](http://localhost:8000). No `.env` is needed; [`.env.example`](.env.example) lists what can be changed.
 
 ```bash
 # Ask for an account's usage
@@ -24,6 +26,9 @@ curl -H 'Authorization: Bearer dev-only-api-key-change-me' localhost:8000/v1/acc
 
 # Run the tests (--build matters: without it Docker reuses an old image)
 docker compose --profile test run --rm --build tests
+
+# Build from this folder instead of pulling
+docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
 
 # Run one simulator scenario
 docker compose run --rm simulator --url http://gateway:8080/webhooks/calls --scenario duplicates

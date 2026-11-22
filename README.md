@@ -78,7 +78,7 @@ These are screenshots of the running apps, framed.
 | Signed webhooks, refused before processing | HMAC-SHA256 over the raw bytes, constant-time compare, then parsing. `401` | [`verification.py`](backend/app/modules/webhooks/verification.py) |
 | Duplicate, late and out-of-order events | Unique event ID. State decided from all of a call's events, whatever the order. Late events count in the month they happened and are flagged | [`call_state.py`](backend/app/modules/metering/call_state.py) |
 | Postgres schema you can justify | Four core tables, each with one job | [Data model](backend/README.md#data-model) |
-| Integer money | `cost_cents` and seconds, `bigint`, end to end | [`001_init.sql`](backend/migrations/001_init.sql) |
+| Integer money | Whole cents and whole seconds everywhere. Totals are `bigint` | [`001_init.sql`](backend/migrations/001_init.sql) |
 | Transactions where correctness depends on them | Usage change and "done" mark share one commit | [`worker.py`](backend/app/modules/metering/worker.py) |
 | Monthly cap, soft or hard, boundary documented | **Soft.** Exactly at the cap counts as reached | [The cap](backend/README.md#the-monthly-cap) |
 | Background job for retries | Workers with growing waits, 8 attempts, then set aside and visible | [`retry_policy.py`](backend/app/modules/inbox/retry_policy.py) |

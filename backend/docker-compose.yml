@@ -18,8 +18,7 @@ x-hardened: &hardened
 
 x-app: &app
   <<: *hardened
-  build: { context: ., target: runtime }
-  image: callzo-task1-backend
+  image: avnisinghal01/callzo-task1-backend:1.0.1   # from source instead: docker-compose.build.yml
   environment:
     DATABASE_URL: postgresql://callzo:${POSTGRES_PASSWORD:-dev-only-password}@postgres:5432/callzo
     WEBHOOK_SECRET: ${WEBHOOK_SECRET:-callzo_test_secret_change_me}
