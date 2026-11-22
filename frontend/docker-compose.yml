@@ -1,0 +1,17 @@
+name: callzo-frontend
+
+services:
+  mock-api:
+    image: meetrj/callzo-mock-usage-api
+    container_name: mock-api
+    ports:
+      - "8001:8001"
+
+  frontend:
+    image: callzo-task2-frontend:1.0.0
+    ports:
+      - "3000:8080"
+    depends_on:
+      - mock-api
+    environment:
+      - API_URL=http://mock-api:8001

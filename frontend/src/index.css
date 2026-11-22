@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/* Figtree (SIL OFL) is self-hosted so the container needs no network access. */
+@font-face {
+  font-family: "Figtree";
+  src: url("/fonts/figtree.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+/*
+ * Tokens follow BoardUI (MIT): neutral-100 cards, white inner tiles, 16px radius, hairline borders.
+ * The four metric colours pass the colour-blind and 3:1 contrast checks as a set. Each metric keeps
+ * its colour everywhere (tile, chart, table, details). Status colours are reserved for status.
+ */
+@theme {
+  --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-page: #ffffff;
+  --color-card: #f6f6f7;
+  --color-tile: #ffffff;
+  --color-line: #e9e9ec;
+  --color-line-strong: #d5d5da;
+  --color-track: #e9e9ee;
+  --color-ink: #17171c;
+  --color-muted: #62626d;
+  --color-faint: #a3a3ad;
+
+  --color-primary: #4f46e5;
+  --color-primary-strong: #4038c7;
+  --color-primary-soft: #eeedff;
+
+  --color-minutes: #4f46e5;
+  --color-sms: #0284a8;
+  --color-cost: #d9480f;
+  --color-signups: #e0318c;
+
+  --color-active: #16a34a;
+  --color-active-soft: #dcf7d6;
+  --color-active-ink: #14602f;
+  --color-trial: #f5a50b;
+  --color-trial-soft: #fff0c2;
+  --color-trial-ink: #7a4a00;
+  --color-suspended: #e5484d;
+  --color-suspended-soft: #ffe1e1;
+  --color-suspended-ink: #a11d25;
+
+  --shadow-tile: 0 1px 2px rgb(23 23 28 / 0.06);
+  --shadow-float: 0 8px 24px -6px rgb(23 23 28 / 0.18), 0 2px 6px rgb(23 23 28 / 0.08);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body {
+  margin: 0;
+  color: var(--color-ink);
+  background: var(--color-page);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+button, select, label[for], summary { cursor: pointer; }
+button:disabled, select:disabled { cursor: not-allowed; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 55%, white); outline-offset: 2px; }
+
+/* Headings receive focus from code on navigation; they are not controls, so no ring. */
+[tabindex="-1"]:focus-visible { outline: none; }
+
+/* Recharts draws its own focus box; keep it on-brand. */
+.recharts-surface:focus-visible { outline-offset: -2px; border-radius: 12px; }
+
+/* ---------- motion: transform and opacity only ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes drawer-in { from { transform: translateX(48px); opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes pulse-dot { 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes changed { 0% { background: color-mix(in srgb, var(--color-trial) 45%, transparent); } 100% { background: transparent; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes confetti { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
+@keyframes wiggle { 0%, 100% { transform: rotate(0) scale(1.08); } 30% { transform: rotate(-8deg) scale(1.1); } 65% { transform: rotate(6deg) scale(1.1); } }
+
+.rise { animation: rise 320ms var(--ease-smooth) both; }
+.pop { animation: pop 260ms var(--ease-spring) both; }
+.fade-in { animation: fade-in 200ms ease-out; }
+.live-dot { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-active) 55%, transparent); animation: pulse-dot 2s infinite; }
+.changed { animation: changed 1.6s ease-out; border-radius: 6px; }
+.confetti { animation: confetti 1.4s cubic-bezier(0.2, 0.7, 0.4, 1) both; }
+.skeleton { background: linear-gradient(90deg, #ececf0 25%, #f7f7f9 50%, #ececf0 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 12px; }
+
+.group:hover .face, .group:has([data-open-account]:focus-visible) .face { animation: wiggle 480ms var(--ease-smooth); }
+
+/* ---------- details drawer: native <dialog>, so focus trap and Escape come from the browser ---------- */
+dialog.drawer { margin: 0 0 0 auto; height: 100dvh; max-height: none; width: 100%; max-width: 440px; border: 0; padding: 0; background: transparent; color: inherit; }
+dialog.drawer[open] { animation: drawer-in 280ms var(--ease-smooth); }
+dialog.drawer::backdrop { background: rgb(23 23 28 / 0.28); animation: fade-in 200ms ease-out; }
+
+/* ---------- checkbox ---------- */
+.check { appearance: none; width: 20px; height: 20px; margin: 0; border: 2px solid var(--color-line-strong); border-radius: 7px; background: white; display: inline-grid; place-items: center; cursor: pointer; transition: background 140ms, border-color 140ms; }
+.check:hover { border-color: var(--color-primary); }
+.check::after { content: ""; transform: scale(0); transition: transform 200ms var(--ease-spring); }
+.check:checked, .check:indeterminate { background: var(--color-primary); border-color: var(--color-primary); }
+.check:checked::after { width: 5px; height: 9px; margin-top: -2px; border: solid white; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.check:indeterminate::after { width: 9px; height: 2.5px; border-radius: 2px; background: white; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after, *::backdrop { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .confetti { display: none; }
+}
