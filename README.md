@@ -1,6 +1,6 @@
 <img src="docs/hero.png" alt="The two projects side by side: a metering console with eight passing scenarios, and an admin console with usage tiles and a chart">
 
-# Callzo Engineering Assessment
+# Callzo
 
 **A service that counts every call exactly once, and a console for the people who run the accounts.**
 
@@ -12,7 +12,7 @@
 | **Tests** | 570, against real Postgres | 15 unit tests, plus 53 checks in real Chrome |
 | **Open it** | [localhost:8000](http://localhost:8000) | [localhost:3000](http://localhost:3000) |
 
-[Run it](#run-it) · [Architecture](#architecture) · [Tour](#a-five-minute-tour) · [What you asked for](#what-you-asked-for-and-where-it-is) · [How you score](#how-you-score-it-and-where-to-look) · [Problems](#problems-we-hit) · [Trade-offs](#what-was-given-up)
+[Run it](#run-it) · [Architecture](#architecture) · [Files and Logics](#files-and-logics) · [Problems](#problems-we-hit)
 
 ## Run it
 
@@ -39,10 +39,6 @@ Task 2 runs a published image, [`avnisinghal01/callzo-task2-frontend:1.0.0`](htt
 
 The tasks share a repository and a look. They do not share code, data or a network, because the brief tests them separately.
 
-**Task 1 in one sentence:** store the event first, answer second, and let a worker add *the difference* between what a call should count for and what it already counted for. That is why a duplicate, a late event, a wrong order or a crash cannot change a total twice.
-
-**Task 2 in one sentence:** what you typed, what the server confirmed and what you selected are three separate things, so a refresh or a failed save can never mix them up.
-
 | In close-up | |
 |---|---|
 | <img src="backend/docs/architecture.png" alt="Five steps in the life of an event, each with what happens when it breaks"> | <img src="frontend/docs/architecture.png" alt="The refresh pipeline and the settings save pipeline"> |
@@ -58,22 +54,11 @@ The tasks share a repository and a look. They do not share code, data or a netwo
 
 These are screenshots of the running apps, framed.
 
-## A five-minute tour
-
-| # | Do this | Look for |
-|---|---|---|
-| 1 | Open [localhost:8000](http://localhost:8000), press **Run all 8** | Duplicates, wrong order, late, broken and forged traffic. Each scenario judges itself |
-| 2 | Open **Accounts**, then `acct_001` | The simulator's burst took it past its cap: **No new calls**, with the moment it crossed |
-| 3 | Run `docker kill callzo-api-1`, then press **Run all 8** again | Still 8 of 8. nginx uses the other server. Bring it back with `docker compose up -d` |
-| 4 | Open [localhost:3000](http://localhost:3000), tick rows, change page, wait 15 s | Numbers flash, rows hold still, ticks stay |
-| 5 | Reload until the chart fails (about 1 in 5) | Only the chart shows an error. The table carries on |
-| 6 | Open an account, **Edit settings**, finish all four steps, go back to **Plan**, change the country | The refusal lands on step 2. **Restore saved value** gets you out. Nothing else is lost |
-
-## What you asked for, and where it is
+## Files and Logics
 
 ### Task 1
 
-| You asked for | Answer | Where |
+| Concepts covered | Answer | Where |
 |---|---|---|
 | Signed webhooks, refused before processing | HMAC-SHA256 over the raw bytes, constant-time compare, then parsing. `401` | [`verification.py`](backend/app/modules/webhooks/verification.py) |
 | Duplicate, late and out-of-order events | Unique event ID. State decided from all of a call's events, whatever the order. Late events count in the month they happened and are flagged | [`call_state.py`](backend/app/modules/metering/call_state.py) |
@@ -91,7 +76,7 @@ These are screenshots of the running apps, framed.
 
 ### Task 2
 
-| You asked for | Answer | Where |
+| Concepts covered | Answer | Where |
 |---|---|---|
 | React, Tailwind, one chart library, nothing else | Three runtime packages: `react`, `react-dom`, `recharts` | [`package.json`](frontend/package.json) |
 | Server-side search, sort and filters | Every control is a query to the API | [`query.ts`](frontend/src/lib/query.ts) |
@@ -105,35 +90,6 @@ These are screenshots of the running apps, framed.
 | Refresh without jumping | Values update in place; a new order waits for you | [`mergeRefresh.ts`](frontend/src/lib/mergeRefresh.ts) |
 | The two deliberate faults | Chart: one quiet retry, then a button. Step 2: prevented where possible, explained where not | [The step 2 trap](frontend/README.md#the-step-2-trap) |
 | Note: where state lives. Note: what was cut | Both | [State](frontend/README.md#where-state-lives-and-why), [Cut](frontend/README.md#what-was-cut-and-why) |
-
-## How you score it, and where to look
-
-| You score | Start here |
-|---|---|
-| **Clarifies before building** | [Questions](#questions-and-assumptions), then the assumptions in each README |
-| **Handles failure cases** | The red boxes in [this diagram](backend/docs/architecture.png), and [failure behaviour](backend/README.md#when-things-break) |
-| **Explains trade-offs** | [What was given up](#what-was-given-up), with a fuller table in each README |
-| **Holds up under change** | "If you change the requirement": [backend](backend/README.md#if-you-change-the-requirement), [frontend](frontend/README.md#if-you-change-the-requirement) |
-| **Taste and simplicity** | No queue server, ORM, router, state or form library. The hard parts are small pure functions: [`call_state.py`](backend/app/modules/metering/call_state.py), [`buckets.py`](backend/app/modules/aggregates/buckets.py), [`mergeRefresh.ts`](frontend/src/lib/mergeRefresh.ts) |
-| **Code quality** | One folder per feature, all SQL in repositories, lint and format checked in [CI](.github/workflows/backend.yml) |
-| **Documentation** | This page, then one README per task |
-| **Runs cleanly in Docker** | One command per task. Checked from a clean copy with empty databases |
-
-## Questions and assumptions
-
-These were unclear, so each has a stated answer that is easy to change.
-
-| Question | Assumed until told otherwise |
-|---|---|
-| Can the service stop a call, or only report? | Only report. It hears about calls after they happen, so it answers "are new calls allowed?" |
-| Is the cap in minutes or money? | Minutes, like `minutes_cap` in your own settings form. Default 200 |
-| Which month does a late call belong to? | The UTC month it happened in. It is flagged, and never uses up this month's cap |
-| Whose midnight ends a month? | UTC |
-| Two different endings for one call? | `ended` beats `failed`, then the later time, then the larger event ID |
-| Same event ID, different content? | The first one stands. The second gets `409` |
-| Which currency? | None is named, so amounts show no symbol |
-| Does "no other library" cover build tools? | No. Vite and TypeScript build the app; only React and Recharts ship in it |
-| Does "roll back" mean erase what I typed? | No. The *saved* value rolls back. Your text stays until you choose |
 
 ## Problems we hit
 
@@ -154,22 +110,3 @@ The ones that taught us something. Each task's README has the rest.
 | **A chart that needed a mouse** | Zooming a bar had no key | Arrow keys move, Enter zooms |
 | **A colour palette that failed** | Pink and green looked the same to some colour-blind users | New palette, checked, and nothing relies on colour alone |
 
-## What was given up
-
-| Chose | Instead of | The price |
-|---|---|---|
-| Postgres as the queue | Kafka, Redis, Celery | A ceiling on throughput. In return: one system to run, one transaction to trust |
-| Soft cap | Hard cap | Calls already running can overshoot. A hard cap needs a reservation in the dialer |
-| Adding differences to four totals | Summing a month on every event | A busy account's workers briefly queue behind each other |
-| Plain SQL | An ORM | More SQL to read, in plain sight |
-| Rows that hold still | A live re-sort | The order can be a little out of date, and says so |
-| Own small hooks | Query, router and form libraries | Their edge cases became ours, so they are tested |
-| A console, audit log and fleet view in Task 1 | Only what the brief lists | More code to own. None of it decides what gets counted |
-
-## Not done
-
-- **Not tested:** a screen reader, or x86 hardware (the images were only built for it).
-- **Browser checks are not in the repository.** A browser test tool would have been another library. The unit tests are here.
-- **One machine, one Postgres.** The load numbers say what this laptop did, not what production would do.
-
-Every measurement, including the failed runs: [learnings.md](learnings.md). Credits: [THIRD_PARTY.md](frontend/THIRD_PARTY.md).
